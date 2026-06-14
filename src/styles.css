@@ -163,6 +163,18 @@ body,
   background: rgba(122, 162, 255, 0.28);
 }
 
+.control-storm {
+  cursor: pointer;
+  font-weight: 600;
+  background: rgba(255, 200, 122, 0.18);
+  border-color: rgba(255, 200, 122, 0.8);
+  color: var(--fg);
+}
+
+.control-storm:hover {
+  background: rgba(255, 200, 122, 0.32);
+}
+
 .control-group {
   padding: 6px;
 }

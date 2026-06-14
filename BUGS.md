@@ -11,17 +11,20 @@ hunting for it has a clear marker.
 
 ---
 
-## BUG #1 — TypeError on 5th drop
+## BUG #1 — TypeError on Drop one (every click)
 
 - **File:** `src/hooks/useFallingObjects.ts`
-- **Trigger:** Click the **Drop one** button five times.
-- **What happens:** On the 5th drop, the code reads past the end of the
+- **Trigger:** Click the **Drop one** button. Any click — the first is
+  enough.
+- **What happens:** On every drop, the code reads past the end of the
   `objects` array (`next[next.length + 1]`) and then accesses a property
   off the resulting `undefined`. A `TypeError: Cannot read properties of
   undefined (reading 'id')` is thrown.
-- **Sentry capture path:** Global error handler (`window.onerror`).
-- **Fix:** Remove the count-gated phantom-access block at the bottom of
-  `dropOne`. The harmless version is:
+- **Sentry capture path:** React ErrorBoundary in `main.tsx` (the throw
+  happens inside a state setter, which React reports during render) +
+  Sentry's global error handler.
+- **Fix:** Remove the phantom-access lines at the bottom of `dropOne`'s
+  setter. The harmless version is:
 
 ```ts
 const dropOne = useCallback(() => {
@@ -29,7 +32,7 @@ const dropOne = useCallback(() => {
 }, [makeObject, weather]);
 ```
 
-- **Difficulty:** Trivial. One-block deletion.
+- **Difficulty:** Trivial. Two-line deletion.
 
 ---
 
@@ -64,40 +67,46 @@ const dropOne = useCallback(() => {
 
 ---
 
-## BUG #4 — Unhandled promise rejection at max intensity
+## BUG #4 — Unhandled promise rejection on Storm
 
-- **File:** `src/hooks/useFallingObjects.ts` (`spawnMany`)
-- **Trigger:** Drag the **intensity** slider to 10 (max).
-- **What happens:** A `Promise.all` containing a rejecting promise is
-  kicked off without `await` or `.catch`, producing an unhandled
-  rejection. The browser surfaces it; Sentry's `onunhandledrejection`
-  handler reports it.
+- **Files:**
+  - `src/hooks/useFallingObjects.ts` (`spawnStorm`)
+  - `src/components/StormButton.tsx` (the trigger)
+- **Trigger:** Click the **⚡ Storm** button.
+- **What happens:** `spawnStorm` kicks off a `Promise.all` containing a
+  rejecting promise without `await` or `.catch`, producing an unhandled
+  rejection. The 8 storm objects still spawn — the UI does NOT crash.
+  Sentry's `onunhandledrejection` integration reports the error in the
+  background.
 - **Sentry capture path:** Sentry's default `BrowserClient` integration
-  for `unhandledrejection`.
-- **Fix:** Delete the `if (intensity >= 10) { void Promise.all([...]) }`
-  block. Or, if you want to keep the "high intensity warning" semantics,
-  attach a `.catch` that logs locally and does not re-raise.
+  for `unhandledrejection`. Silent — no UI fallback.
+- **Demo flavor:** "an error your users would never notice — but Skyfall
+  catches it anyway."
+- **Fix:** Delete the `void Promise.all([Promise.resolve, Promise.reject])`
+  block from `spawnStorm`. Keep the rest (the spawn of 8 objects) so the
+  Storm button still does something visible.
 - **Difficulty:** Trivial. One-block deletion.
 
 ---
 
-## BUG #5 — Header hover race
+## BUG #5 — Header hover dereferences null ref
 
 - **File:** `src/components/Header.tsx`
-- **Trigger:** Leave the page open for 30 seconds, then hover the Skyfall
-  logo / header.
-- **What happens:** After a 30s timer elapses, an interval starts wiping
-  `stateRef.current` to null every 200ms. The `onHover` handler reads
-  `stateRef.current!.glowIntensity` and throws a `TypeError` once the
-  ref has been nulled.
+- **Trigger:** Hover the Skyfall logo (or anywhere on the header). First
+  hover is enough.
+- **What happens:** `stateRef` is initialized to `null`. The `onHover`
+  handler reads `stateRef.current!.glowIntensity` and throws a
+  `TypeError` because `current` is null. Realistic shape: the programmer
+  forgot to initialize the ref before adding the handler that reads it.
 - **Sentry capture path:** Explicit `Sentry.captureException` in the
-  `try/catch` inside `onHover`, then re-thrown.
-- **Fix:** Remove the second `useEffect` that nulls the ref. The
-  `stateRef` should remain set throughout the component's lifetime.
-  Alternative: guard the read with optional chaining
-  (`stateRef.current?.glowIntensity ?? 1`).
-- **Difficulty:** Easy. One small effect block to delete, or one line to
-  add a `?.` guard.
+  `try/catch` inside `onHover`, then re-thrown so the ErrorBoundary
+  surfaces it.
+- **Fix:** Two equally good options —
+  1. Initialize the ref with a real value:
+     `useRef<{ glowIntensity: number } | null>({ glowIntensity: 1 })`
+  2. Guard the read with optional chaining:
+     `const intensity = stateRef.current?.glowIntensity ?? 1;`
+- **Difficulty:** Trivial. One-line change either way.
 
 ---
 

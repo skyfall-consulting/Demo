@@ -6,14 +6,13 @@ import { SkyCanvas } from './components/SkyCanvas';
 import { DropButton } from './components/DropButton';
 import { WeatherToggle } from './components/WeatherToggle';
 import { CatchCounter } from './components/CatchCounter';
-import { IntensitySlider } from './components/IntensitySlider';
+import { StormButton } from './components/StormButton';
 
 export default function App() {
   const [weather, setWeather] = useState<WeatherMode>('rain');
-  const [intensity, setIntensity] = useState(3);
   const [caughtCount, setCaughtCount] = useState(0);
 
-  const { objects, dropOne, catchObject, spawnMany } = useFallingObjects({
+  const { objects, dropOne, catchObject, spawnStorm } = useFallingObjects({
     weather,
   });
 
@@ -31,15 +30,9 @@ export default function App() {
       />
       <div className="controls">
         <DropButton onDrop={dropOne} />
+        <StormButton onStorm={spawnStorm} />
         <WeatherToggle value={weather} onChange={setWeather} />
         <CatchCounter value={caughtCount} onReset={() => setCaughtCount(0)} />
-        <IntensitySlider
-          value={intensity}
-          onChange={(next) => {
-            setIntensity(next);
-            spawnMany(next);
-          }}
-        />
       </div>
       <footer className="footer">
         <span>Skyfall Sky · demo playground</span>

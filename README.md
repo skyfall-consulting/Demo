@@ -25,13 +25,13 @@ For the moment-by-moment script you'll actually run during a demo, see
 Five interactive controls layered over a "things falling from the sky"
 canvas:
 
-| Control            | What it does                                | Bug class it surfaces           |
-| ------------------ | -------------------------------------------- | -------------------------------- |
-| **Drop one**       | Spawns one falling object                    | `TypeError` (off-by-one)         |
-| **Weather toggle** | Switches rain / snow / stars                 | Simulated 5xx (snow mode)        |
-| **Catch counter**  | Click falling objects to "catch" them        | Logic bug (counter inverted)     |
-| **Intensity**      | Slider 1–10, controls how many objects fall  | Unhandled promise rejection      |
-| **Skyfall logo**   | Hover for a glow effect                      | Event-handler race (TypeError)   |
+| Control            | What it does                                 | Bug class it surfaces           | Trigger              |
+| ------------------ | -------------------------------------------- | -------------------------------- | -------------------- |
+| **Drop one**       | Spawns one falling object                    | `TypeError` (off-by-one deref)   | One click            |
+| **Weather toggle** | Switches rain / snow / stars                 | Simulated 5xx (snow mode)        | Click "snow" chip    |
+| **⚡ Storm**        | Spawns 8 falling objects at once             | Unhandled promise rejection      | One click            |
+| **Catch counter**  | Click falling objects to "catch" them        | Logic bug (counter inverted)     | Catch any object     |
+| **Skyfall logo**   | Hover for a glow effect                      | TypeError on null deref           | Hover                |
 
 All five fire to Sentry. Three of them throw and surface in the in-app
 error boundary; two report silently in the background. That's intentional —
@@ -122,9 +122,9 @@ The full step-by-step lives in [`DEMO_FLOW.md`](./DEMO_FLOW.md).
         ├── Header.tsx
         ├── SkyCanvas.tsx
         ├── DropButton.tsx
+        ├── StormButton.tsx
         ├── WeatherToggle.tsx
-        ├── CatchCounter.tsx
-        └── IntensitySlider.tsx
+        └── CatchCounter.tsx
 ```
 
 ---

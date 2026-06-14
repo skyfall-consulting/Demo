@@ -7,7 +7,6 @@ interface UseFallingObjectsArgs {
 
 export function useFallingObjects({ weather }: UseFallingObjectsArgs) {
   const [objects, setObjects] = useState<FallingObject[]>([]);
-  const dropCountRef = useRef(0);
   const idRef = useRef(0);
 
   const makeObject = useCallback(
@@ -27,17 +26,13 @@ export function useFallingObjects({ weather }: UseFallingObjectsArgs) {
   );
 
   const dropOne = useCallback(() => {
-    dropCountRef.current += 1;
-    const count = dropCountRef.current;
     setObjects((prev) => {
       const next = [...prev, makeObject(weather)];
-      // BUG #1 (intentional): on the 5th drop click we read past the end of the array.
-      // Throws a TypeError that Sentry catches via the global error handler.
-      if (count === 5) {
-        const phantom = next[next.length + 1] as FallingObject | undefined;
-        // touching a property on `undefined` to trigger the TypeError at runtime
-        (phantom as FallingObject).id;
-      }
+      // BUG #1 (intentional): read past the end of the array and dereference
+      // the result. Throws a TypeError on every click. Captured by the
+      // React ErrorBoundary in main.tsx (and Sentry's global handler).
+      const phantom = next[next.length + 1] as FallingObject | undefined;
+      (phantom as FallingObject).id;
       return next;
     });
   }, [makeObject, weather]);
@@ -52,24 +47,21 @@ export function useFallingObjects({ weather }: UseFallingObjectsArgs) {
     }, 600);
   }, []);
 
-  const spawnMany = useCallback(
-    (intensity: number) => {
-      // BUG #4 (intentional): at max intensity we kick off a Promise.all that includes
-      // a rejecting promise, and we deliberately do NOT await it — producing an
-      // unhandled promise rejection that Sentry's onunhandledrejection captures.
-      if (intensity >= 10) {
-        void Promise.all([
-          Promise.resolve('ok'),
-          Promise.reject(
-            new Error('IntensityOverflow: storm intensity exceeded safe threshold (10)'),
-          ),
-        ]);
-      }
-      const toAdd = Array.from({ length: intensity }, () => makeObject(weather));
-      setObjects((prev) => [...prev, ...toAdd]);
-    },
-    [makeObject, weather],
-  );
+  const spawnStorm = useCallback(() => {
+    // BUG #4 (intentional): kick off a Promise.all that includes a rejecting
+    // promise, and deliberately don't await it. Produces an unhandled promise
+    // rejection that Sentry's onunhandledrejection handler captures. The UI
+    // does NOT crash — the storm still renders, the error fires in the
+    // background. Demo flavor: "an error your users would never notice."
+    void Promise.all([
+      Promise.resolve('ok'),
+      Promise.reject(
+        new Error('StormSurge: simulated transient infrastructure failure'),
+      ),
+    ]);
+    const toAdd = Array.from({ length: 8 }, () => makeObject(weather));
+    setObjects((prev) => [...prev, ...toAdd]);
+  }, [makeObject, weather]);
 
-  return { objects, dropOne, catchObject, spawnMany };
+  return { objects, dropOne, catchObject, spawnStorm };
 }

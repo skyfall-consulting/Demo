@@ -25,10 +25,22 @@ If any of (1)–(5) are missing, the loop will break at the point that one's res
 
 ### Step 1 — trigger a bug
 
-Open the deployed Skyfall Sky app. Pick one of the five buggy controls
-(start with **"Drop one"** clicked 5 times — it's the most legible). The
-app's error boundary surfaces the failure, and `@sentry/react` ships the
-event to Sentry within ~1 second.
+Open the deployed Skyfall Sky app. Pick any of the five buggy controls;
+a single click (or hover, for the header) is enough. Recommended demo
+order:
+
+1. **Drop one** — single click → TypeError, error boundary appears (most
+   visually legible — lead with this)
+2. **Weather → snow** — single click on the snow chip → simulated 500
+3. **⚡ Storm** — single click → unhandled rejection (silent — UI keeps
+   working; the "error your users would never see" beat)
+4. **Catch a falling object** — counter goes to -1 (silent — counter
+   highlights red; another "users wouldn't notice" beat)
+5. **Hover the logo** — hover anywhere on the header → TypeError
+
+The app's error boundary surfaces the synchronous failures (#1, #2, #5)
+within ~1 second. The silent ones (#3, #4) fire to Sentry in the
+background without any visible UI change.
 
 > **Say:** "I'm a user, the app just broke. I didn't tell anyone."
 
