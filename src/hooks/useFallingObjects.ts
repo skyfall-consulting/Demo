@@ -48,17 +48,6 @@ export function useFallingObjects({ weather }: UseFallingObjectsArgs) {
   }, []);
 
   const spawnStorm = useCallback(() => {
-    // BUG #4 (intentional): kick off a Promise.all that includes a rejecting
-    // promise, and deliberately don't await it. Produces an unhandled promise
-    // rejection that Sentry's onunhandledrejection handler captures. The UI
-    // does NOT crash — the storm still renders, the error fires in the
-    // background. Demo flavor: "an error your users would never notice."
-    void Promise.all([
-      Promise.resolve('ok'),
-      Promise.reject(
-        new Error('StormSurge: simulated transient infrastructure failure'),
-      ),
-    ]);
     const toAdd = Array.from({ length: 8 }, () => makeObject(weather));
     setObjects((prev) => [...prev, ...toAdd]);
   }, [makeObject, weather]);
