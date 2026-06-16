@@ -26,15 +26,7 @@ export function useFallingObjects({ weather }: UseFallingObjectsArgs) {
   );
 
   const dropOne = useCallback(() => {
-    setObjects((prev) => {
-      const next = [...prev, makeObject(weather)];
-      // BUG #1 (intentional): read past the end of the array and dereference
-      // the result. Throws a TypeError on every click. Captured by the
-      // React ErrorBoundary in main.tsx (and Sentry's global handler).
-      const phantom = next[next.length + 1] as FallingObject | undefined;
-      (phantom as FallingObject).id;
-      return next;
-    });
+    setObjects((prev) => [...prev, makeObject(weather)]);
   }, [makeObject, weather]);
 
   const catchObject = useCallback((id: number) => {
