@@ -23,9 +23,7 @@ export default function App() {
         objects={objects}
         onCatch={(id) => {
           catchObject(id);
-          // BUG #3 (intentional): catching DECREMENTS the counter instead of incrementing.
-          // Sentry capture is triggered inside CatchCounter when the value drops below zero.
-          setCaughtCount((c) => c - 1);
+          setCaughtCount((c) => c + 1);
         }}
       />
       <div className="controls">
