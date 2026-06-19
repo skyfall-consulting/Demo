@@ -1,5 +1,4 @@
 import type { WeatherMode } from '../types';
-import { Sentry } from '../sentry';
 
 interface WeatherToggleProps {
   value: WeatherMode;
@@ -10,16 +9,6 @@ const MODES: WeatherMode[] = ['rain', 'snow', 'stars'];
 
 export function WeatherToggle({ value, onChange }: WeatherToggleProps) {
   const handle = (next: WeatherMode) => {
-    // BUG #2 (intentional): switching to "snow" simulates a 5xx from a backend
-    // service that doesn't exist. We capture the error to Sentry and rethrow so
-    // the UI surfaces it via the ErrorBoundary.
-    if (next === 'snow') {
-      const err = new Error(
-        'WeatherService: failed to load snow assets (HTTP 500 from /api/weather?mode=snow)',
-      );
-      Sentry.captureException(err, { tags: { bug: 'weather-snow-500' } });
-      throw err;
-    }
     onChange(next);
   };
 
